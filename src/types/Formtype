@@ -1,0 +1,6 @@
+export interface formModel {
+    age: any;
+    state: any;
+    futureCost: any;
+    inflatonRate: any;
+}

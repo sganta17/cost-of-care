@@ -3,7 +3,7 @@ import Container from 'react-bootstrap/Container'
 import Jumbotron from 'react-bootstrap/Jumbotron'
 
 
-function Banner() {
+const Banner = () => {
     return (
         <div className="Banner">
             <Jumbotron fluid>
@@ -13,7 +13,7 @@ function Banner() {
         </div>
     );
 }
-function sayHello() {
+const  sayHello = () => {
     alert('Hello!');
 }
 export default Banner;

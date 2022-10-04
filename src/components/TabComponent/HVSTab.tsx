@@ -1,16 +1,15 @@
 import React, { useState } from "react";
-
 import DatePicker from "react-datepicker";
 import "../../css/customDatePickerWidth.css";
 import "react-datepicker/dist/react-datepicker.css";
 import ReactTable from "react-table-6";
 import "react-table-6/react-table.css";
-
+import { Button, Col, Container, Row } from "react-bootstrap";
+import Form from 'react-bootstrap/Form';
+import axios from "axios";
 
 
 const HVSTab = () => {
-
-
     const countryData = [
         { label: 'ALABAMA', value: 'AL' },
         { label: 'ALASKA', value: 'AK' },
@@ -73,26 +72,6 @@ const HVSTab = () => {
         { label: 'WYOMING', value: 'WY' }
     ];
 
-    const [inputs, setInputs] = useState({});
-
-    const handleChange = (event) => {
-        const name = event.target.name;
-        const value = event.target.value;
-        setInputs(values => ({ ...values, [name]: value }))
-    }
-
-
-
-    const updateSubmit = (event) => {
-        alert('You have entered the UserName and CompanyName successfully.');
-        event.preventDefault();
-    }
-
-    const currentDate = new Date();
-
-    const [myYear, setMyYear] = useState(currentDate);
-
-
     const AHdata = [{
         Hrate: 1,
         Hservices: 'N/A'
@@ -109,6 +88,7 @@ const HVSTab = () => {
         Hrate: 5,
         Hservices: 'N/A'
     }];
+
     const AHcolumns = [{
         Header: 'Inflation Rate percent',
         accessor: 'Hrate'
@@ -120,8 +100,6 @@ const HVSTab = () => {
         accessor: 'HHHA'
 
     }];
-
-
 
     const ACdata = [{
         Hrate: 1,
@@ -139,6 +117,7 @@ const HVSTab = () => {
         Hrate: 5,
         Hservices: 'N/A'
     }];
+
     const ACcolumns = [{
         Header: 'Inflation Rate percent',
         accessor: 'Hrate'
@@ -148,10 +127,7 @@ const HVSTab = () => {
     }, {
         Header: 'Assisted Living Facility',
         accessor: 'HHHA'
-
     }];
-
-
 
     const ANdata = [{
         Hrate: 1,
@@ -169,6 +145,7 @@ const HVSTab = () => {
         Hrate: 5,
         Hservices: 'N/A'
     }];
+
     const ANcolumns = [{
         Header: 'Inflation Rate percent',
         accessor: 'Hrate'
@@ -178,89 +155,95 @@ const HVSTab = () => {
     }, {
         Header: 'Private Room ',
         accessor: 'HHHA'
-
     }];
+
+    const [inputs, setInputs] = useState<any>({
+        age: '', state: 'AL', futureCost: new Date(), inflationRate: ''
+    });
+    const [success, setSuccess] = useState(false);
+    const [validated, setValidated] = useState<boolean>(false);
+    const onChangeForm = (event: React.ChangeEvent<any>) => {
+        const name = event.target.name;
+        const value = event.target.value;
+        setInputs({ ...inputs, [name]: value });
+    };
+
+    const onFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        if (form.checkValidity() === false) {
+            event.preventDefault();
+            event.stopPropagation();
+            setValidated(true);
+            return;
+        }
+        const detailsData = {
+            "age": inputs.age,
+            "state": inputs.state,
+            "futureCost": inputs.futureCost,
+            "inflationRate": inputs.inflationRate,
+        };
+        axios.post(`https://4wbrcdpngc.execute-api.us-east-1.amazonaws.com/default/costofcare`, detailsData)
+            .then(res => {
+                setSuccess(true);
+            }).catch((error) => {
+                console.log(error);
+            })
+    }
 
     return (
         <div className="HVSTab">
             <p>Calculate the Cost of Care in your area</p>
-            <form onSubmit={updateSubmit}>
+            <Container>
+                <Row>
+                    <Col lg={6}>
+                        <Form noValidate validated={validated} onSubmit={onFormSubmit}>
+                            <Form.Group className="mb-3" controlId="formBasicEmail">
+                                <Form.Label className="mandatory">Age</Form.Label>
+                                <Form.Control required name='age' type="number" max={120} value={inputs.age} onChange={onChangeForm} placeholder="Enter Age" />
+                                <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
+                            </Form.Group>
+                            <Form.Group className="mb-3" controlId="formBasicEmail">
+                                <Form.Label className="mandatory">State</Form.Label>
+                                <Form.Control as="select" value={inputs.state} required onChange={onChangeForm} name="state" aria-label="Default select example">
+                                    {countryData.map((e, key) => {
+                                        return <option key={key} value={e.value}>{e.label}</option>;
+                                    })}
+                                </Form.Control>
+                                <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
+                            </Form.Group>
 
-                <div className="container">
-                    <div className="input-container">
-                        <div>
-                            <label>Age
-                            </label>
-                            <br />
-                            <input className="fieldWidth"
-                                max={120}
-                                type="number"
-                                name="age"
-                                value={inputs.age || ""}
-                                onChange={handleChange}
-                            />
-                        </div>
-                    </div>
-                </div>
+                            <Form.Group className="mb-3" controlId="formBasicEmail">
+                                <Form.Label className="mandatory">Future Cost</Form.Label>
+                                <DatePicker
+                                    className="customDatePickerWidth"
+                                    required
+                                    selected={inputs.futureCost}
+                                    onChange={(date) => { date && setInputs({ ...inputs, 'futureCost': new Date(date) }) }}
+                                    showYearPicker
+                                    dateFormat="yyyy"
+                                />
+                                <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
+                            </Form.Group>
+                            <Form.Group className="mb-3" controlId="formBasicEmail">
+                                <Form.Label className="mandatory">Inflation Rate</Form.Label>
+                                <Form.Control required name='inflationRate' type="number" max={120} onChange={onChangeForm} value={inputs.inflationRate} placeholder="Enter Name" />
+                                <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
+                            </Form.Group>
+                            <Button variant="primary" type="submit">
+                                Submit
+                            </Button>
+                        </Form>
+                    </Col>
+                </Row>
 
-                <div className="container">
-                    <div className="input-container">
-                        <div>
-                            <label>State</label>
-                            <br />
-                            <select className="fieldWidth"
-                                value={inputs.state}
-                                onChange={handleChange}
-                            >
-                                <option value="">Select State</option>
-                                {countryData.map((e, key) => {
-                                    return <option key={key} value={e.value}>{e.label}</option>;
-                                })}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-
-                <div className="container">
-                    <div className="input-container">
-                        <div>
-                            <label>Future Cost</label>
-                            <DatePicker className="customDatePickerWidth"
-                                selected={myYear}
-                                onChange={(date) => setMyYear(date)}
-                                showYearPicker
-                                dateFormat="yyyy"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="container">
-                    <div className="input-container">
-                        <div>
-                            <label>Inflation Rate
-                            </label>
-                            <br />
-                            <input className="fieldWidth"
-                                max={120}
-                                type="number"
-                                name="rate"
-                                value={inputs.rate || ""}
-                                onChange={handleChange}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <input type="submit" className="submitButton" />
-            </form>
-            <div class="container">
-                <div class="row">
-                    <div class="col-sm">
+            </Container>
+            {success ? <div className="container">
+                <div className="row">
+                    <div className="col-sm">
                         (A) IN-HOME CARE
 
-                        <div>
+                        {/* <div>
                             <br />
                             <h6>HOURLY
                                 COSTS
@@ -271,9 +254,9 @@ const HVSTab = () => {
                                 showPagination={false}
                                 defaultPageSize={-1}
                             />
-                        </div>
+                        </div> */}
 
-                        <div>
+                        {/* <div>
                             <br />
                             <h6>DAILY
                                 COSTS
@@ -284,9 +267,9 @@ const HVSTab = () => {
                                 showPagination={false}
                                 defaultPageSize={-1}
                             />
-                        </div>
+                        </div> */}
 
-                        <div>
+                        {/* <div>
                             <br />
                             <h6>MONTHLY
                                 COSTS
@@ -297,7 +280,7 @@ const HVSTab = () => {
                                 showPagination={false}
                                 defaultPageSize={-1}
                             />
-                        </div>
+                        </div> */}
 
                         <div>
                             <br />
@@ -312,10 +295,10 @@ const HVSTab = () => {
                             />
                         </div>
                     </div>
-                    <div class="col-sm">
+                    <div className="col-sm">
                         (B) COMMUNITY AND ASSISTED LIVING
 
-                        <div>
+                        {/* <div>
                             <br />
                             <h6>DAILY
                                 COSTS
@@ -326,9 +309,9 @@ const HVSTab = () => {
                                 showPagination={false}
                                 defaultPageSize={-1}
                             />
-                        </div>
+                        </div> */}
 
-                        <div>
+                        {/* <div>
                             <br />
                             <h6>MONTHLY
                                 COSTS
@@ -339,7 +322,7 @@ const HVSTab = () => {
                                 showPagination={false}
                                 defaultPageSize={-1}
                             />
-                        </div>
+                        </div> */}
 
                         <div>
                             <br />
@@ -354,9 +337,9 @@ const HVSTab = () => {
                             />
                         </div>
                     </div>
-                    <div class="col-sm">
+                    <div className="col-sm">
                         (C) NURSING HOME FACILITY
-                        <div>
+                        {/* <div>
                             <br />
                             <h6>DAILY
                                 COSTS
@@ -367,9 +350,9 @@ const HVSTab = () => {
                                 showPagination={false}
                                 defaultPageSize={-1}
                             />
-                        </div>
+                        </div> */}
 
-                        <div>
+                        {/* <div>
                             <br />
                             <h6>MONTHLY
                                 COSTS
@@ -380,7 +363,7 @@ const HVSTab = () => {
                                 showPagination={false}
                                 defaultPageSize={-1}
                             />
-                        </div>
+                        </div> */}
 
                         <div>
                             <br />
@@ -396,11 +379,8 @@ const HVSTab = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> : ''}
         </div>
-
-
-
     );
 };
 

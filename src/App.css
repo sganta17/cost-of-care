@@ -114,10 +114,10 @@ ul.nav li.active {
   font-size: 2rem;
 }
 
-.react-datepicker-ignore-onclickoutside,
+/* .react-datepicker-ignore-onclickoutside,
 .fieldWidth {
   width: 40% !important;
-}
+} */
 
 .submitButton {
   margin: 30px;
@@ -125,3 +125,8 @@ ul.nav li.active {
   border: 1px solid #707d38;
   color: #ffffff;
 }
+
+.mandatory::after  {
+  content: "*";
+  color: red;
+  }

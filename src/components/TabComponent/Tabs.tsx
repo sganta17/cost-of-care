@@ -3,7 +3,7 @@ import HVSTab from "./HVSTab";
 import LTCCTab from "./LTCCTab";
 
 const Tabs = () => {
-    const [activeTab, setActiveTab] = useState("hvs");
+    const [activeTab, setActiveTab] = useState<string>("hvs");
 
     //  Functions to handle Tab Switching
     const handleHVSTab = () => {
