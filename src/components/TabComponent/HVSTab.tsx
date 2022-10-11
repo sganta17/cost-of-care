@@ -4,7 +4,6 @@ import { Button, Col, Container, Row } from "react-bootstrap";
 import Form from 'react-bootstrap/Form';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import "react-table-6/react-table.css";
 import "../../css/customDatePickerWidth.css";
 import ErrorSpinner from "../ErrorSpinner";
 import CustomTable from "./LeadTable/CustomTable";
@@ -166,7 +165,7 @@ const HVSTab = () => {
             .then(res => {
                 setUpdate(false);
                 regionData = res.data.regionExpenses.Rows.filter((region: any) => {
-                    return region.MetroRegionCode == inputs.region
+                    return region.MetroRegionCode === parseInt(inputs.region)
                 })
                 if (regionData.length > 0) {
                     setAHdata([{ "Hrate": inputs.inflationRate, "Hservices": regionData[0].HHCHomemaker, "Haid": "N/A" }]);
@@ -183,15 +182,15 @@ const HVSTab = () => {
         <div className="HVSTab">
             {update ? <ErrorSpinner /> : ''}
             <><p>Calculate the Cost of Care in your area</p><Container>
-                <Row>
-                    <Col lg={4}>
-                        <Form noValidate validated={validated} onSubmit={onFormSubmit}>
-                            <Form.Group className="mb-3" controlId="formBasicEmail">
+                <Form noValidate validated={validated} onSubmit={onFormSubmit}>
+                    <Row>
+                        <Col lg={4}>
+                            <Form.Group className="mb-3" controlId="formBasicAge">
                                 <Form.Label className="mandatory">Age</Form.Label>
                                 <Form.Control required name='age' type="number" max={120} value={inputs.age} onChange={onChangeForm} placeholder="Enter Age" />
                                 <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
                             </Form.Group>
-                            <Form.Group className="mb-3" controlId="formBasicEmail">
+                            <Form.Group className="mb-3" controlId="formBasicCost">
                                 <Form.Label className="mandatory">Future Cost</Form.Label>
                                 <DatePicker
                                     className="customDatePickerWidth"
@@ -206,186 +205,189 @@ const HVSTab = () => {
                             <Button variant="primary" type="submit" disabled={update}>
                                 Submit
                             </Button>
-                        </Form>
-                    </Col>
-                    <Col lg={4}>
-                        <Form.Group className="mb-3" controlId="formBasicEmail">
-                            <Form.Label className="mandatory">State</Form.Label>
-                            <Form.Control as="select" value={inputs.state} required onChange={onChangeState} name="state" aria-label="Default select example">
-                                <option value={''}>Select State</option>
-                                {countryData.map((e, key) => {
-                                    return <option key={key} value={e.value}>{e.label}</option>;
-                                })}
-                            </Form.Control>
-                            <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
-                        </Form.Group>
-                        <Form.Group className="mb-3" controlId="formBasicEmail">
-                            <Form.Label className="mandatory">Inflation Rate</Form.Label>
-                            <Form.Control required name='inflationRate' type="number" max={5} onChange={onChangeForm} value={inputs.inflationRate} placeholder="Enter Name" />
-                            <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
-                        </Form.Group>
-                    </Col>
-                    <Col lg={4}>
-                        {showRegions ?
-                            <Form.Group className="mb-3" controlId="formBasicEmail">
-                                <Form.Label className="mandatory">Regions</Form.Label>
-                                <Form.Control as="select" value={inputs.region} required onChange={onChangeState} name="region" aria-label="Default select example">
-                                    <option value={''}>Select Region</option>
-                                    {regions.map((e: any, key) => {
-                                        return <option key={key} value={e.MetroRegionCode}>{e.MetroRegion}</option>;
+                        </Col>
+                        <Col lg={4}>
+                            <Form.Group className="mb-3" controlId="formBasicState">
+                                <Form.Label className="mandatory">State</Form.Label>
+                                <Form.Control as="select" value={inputs.state} required onChange={onChangeState} name="state" aria-label="Default select example">
+                                    <option value={''}>Select State</option>
+                                    {countryData.map((e, key) => {
+                                        return <option key={key} value={e.value}>{e.label}</option>;
                                     })}
                                 </Form.Control>
                                 <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
-                            </Form.Group> : ''}
-                    </Col>
-                </Row>
+                            </Form.Group>
+                            <Form.Group className="mb-3" controlId="formBasicInflation">
+                                <Form.Label className="mandatory">Inflation Rate</Form.Label>
+                                <Form.Control required name='inflationRate' type="number" max={5} onChange={onChangeForm} value={inputs.inflationRate} placeholder="Enter Name" />
+                                <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
+                            </Form.Group>
+                        </Col>
+                        <Col lg={4}>
+                            {showRegions ?
+                                <Form.Group className="mb-3" controlId="formBasicRegion">
+                                    <Form.Label className="mandatory">Region</Form.Label>
+                                    <Form.Control as="select" value={inputs.region} required onChange={onChangeState} name="region" aria-label="Default select example">
+                                        <option value={''}>Select Region</option>
+                                        {regions.map((e: any, key) => {
+                                            return <option key={key} value={e.MetroRegionCode}>{e.MetroRegion}</option>;
+                                        })}
+                                    </Form.Control>
+                                    <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
+                                </Form.Group> : ''}
+                        </Col>
+
+                    </Row>
+                </Form>
             </Container></>
-            {success ? 
-            <Container className="container">
-                <Row className="row">
-                    <Col lg= { 4 } className="col-sm">
-                        (A) IN-HOME CARE
+            {success ?
+                <>
+                    <hr />
+                    <Container className="container">
+                        <Row className="row">
+                            <Col lg={4} className="col-sm">
+                                (A) IN-HOME CARE
 
-                        {/* <div>
-                            <br />
-                            <h6>HOURLY
-                                COSTS
-                                (Projected)</h6>
-                            <ReactTable
-                                data={AHdata}
-                                columns={AHcolumns}
-                                showPagination={false}
-                                defaultPageSize={-1}
-                            />
-                        </div> */}
+                                {/* <div>
+        <br />
+        <h6>HOURLY
+            COSTS
+            (Projected)</h6>
+        <ReactTable
+            data={AHdata}
+            columns={AHcolumns}
+            showPagination={false}
+            defaultPageSize={-1}
+        />
+    </div> */}
 
-                        {/* <div>
-                            <br />
-                            <h6>DAILY
-                                COSTS
-                                (Projected)</h6>
-                            <ReactTable
-                                data={AHdata}
-                                columns={AHcolumns}
-                                showPagination={false}
-                                defaultPageSize={-1}
-                            />
-                        </div> */}
+                                {/* <div>
+        <br />
+        <h6>DAILY
+            COSTS
+            (Projected)</h6>
+        <ReactTable
+            data={AHdata}
+            columns={AHcolumns}
+            showPagination={false}
+            defaultPageSize={-1}
+        />
+    </div> */}
 
-                        {/* <div>
-                            <br />
-                            <h6>MONTHLY
-                                COSTS
-                                (Projected)</h6>
-                            <ReactTable
-                                data={AHdata}
-                                columns={AHcolumns}
-                                showPagination={false}
-                                defaultPageSize={-1}
-                            />
-                        </div> */}
+                                {/* <div>
+        <br />
+        <h6>MONTHLY
+            COSTS
+            (Projected)</h6>
+        <ReactTable
+            data={AHdata}
+            columns={AHcolumns}
+            showPagination={false}
+            defaultPageSize={-1}
+        />
+    </div> */}
 
-                        <div>
-                            <br />
-                            <h6>ANNUAL
-                                COSTS
-                                (Projected)</h6>
-                            <CustomTable heading={AHcolumns} body={aHdata} />
-                            {/* <ReactTable
-                                data={AHdata}
-                                columns={AHcolumns}
-                                showPagination={false}
-                                defaultPageSize={-1}
-                            /> */}
-                        </div>
-                    </Col>
-                    <Col lg = { 4 } className="col-sm">
-                        (B) COMMUNITY AND ASSISTED LIVING
+                                <div>
+                                    <br />
+                                    <h6>ANNUAL
+                                        COSTS
+                                        (Projected)</h6>
+                                    <CustomTable heading={AHcolumns} body={aHdata} />
+                                    {/* <ReactTable
+        data={AHdata}
+        columns={AHcolumns}
+        showPagination={false}
+        defaultPageSize={-1}
+    /> */}
+                                </div>
+                            </Col>
+                            <Col lg={4} className="col-sm">
+                                (B) COMMUNITY AND ASSISTED LIVING
 
-                        {/* <div>
-                            <br />
-                            <h6>DAILY
-                                COSTS
-                                (Projected)</h6>
-                            <ReactTable
-                                data={ACdata}
-                                columns={ACcolumns}
-                                showPagination={false}
-                                defaultPageSize={-1}
-                            />
-                        </div> */}
+                                {/* <div>
+        <br />
+        <h6>DAILY
+            COSTS
+            (Projected)</h6>
+        <ReactTable
+            data={ACdata}
+            columns={ACcolumns}
+            showPagination={false}
+            defaultPageSize={-1}
+        />
+    </div> */}
 
-                        {/* <div>
-                            <br />
-                            <h6>MONTHLY
-                                COSTS
-                                (Projected)</h6>
-                            <ReactTable
-                                data={ACdata}
-                                columns={ACcolumns}
-                                showPagination={false}
-                                defaultPageSize={-1}
-                            />
-                        </div> */}
+                                {/* <div>
+        <br />
+        <h6>MONTHLY
+            COSTS
+            (Projected)</h6>
+        <ReactTable
+            data={ACdata}
+            columns={ACcolumns}
+            showPagination={false}
+            defaultPageSize={-1}
+        />
+    </div> */}
 
-                        <div>
-                            <br />
-                            <h6>ANNUAL
-                                COSTS
-                                (Projected)</h6>
-                            <CustomTable heading={ACcolumns} body={aCdata} />
-                            {/* <ReactTable
-                                data={ACdata}
-                                columns={ACcolumns}
-                                showPagination={false}
-                                defaultPageSize={-1}
-                            /> */}
-                        </div>
-                    </Col>
-                    <Col lg = { 4 } className="col-sm">
-                        (C) NURSING HOME FACILITY
-                        {/* <div>
-                            <br />
-                            <h6>DAILY
-                                COSTS
-                                (Projected)</h6>
-                            <ReactTable
-                                data={ANdata}
-                                columns={ANcolumns}
-                                showPagination={false}
-                                defaultPageSize={-1}
-                            />
-                        </div> */}
+                                <div>
+                                    <br />
+                                    <h6>ANNUAL
+                                        COSTS
+                                        (Projected)</h6>
+                                    <CustomTable heading={ACcolumns} body={aCdata} />
+                                    {/* <ReactTable
+        data={ACdata}
+        columns={ACcolumns}
+        showPagination={false}
+        defaultPageSize={-1}
+    /> */}
+                                </div>
+                            </Col>
+                            <Col lg={4} className="col-sm">
+                                (C) NURSING HOME FACILITY
+                                {/* <div>
+        <br />
+        <h6>DAILY
+            COSTS
+            (Projected)</h6>
+        <ReactTable
+            data={ANdata}
+            columns={ANcolumns}
+            showPagination={false}
+            defaultPageSize={-1}
+        />
+    </div> */}
 
-                        {/* <div>
-                            <br />
-                            <h6>MONTHLY
-                                COSTS
-                                (Projected)</h6>
-                            <ReactTable
-                                data={ANdata}
-                                columns={ANcolumns}
-                                showPagination={false}
-                                defaultPageSize={-1}
-                            />
-                        </div> */}
+                                {/* <div>
+        <br />
+        <h6>MONTHLY
+            COSTS
+            (Projected)</h6>
+        <ReactTable
+            data={ANdata}
+            columns={ANcolumns}
+            showPagination={false}
+            defaultPageSize={-1}
+        />
+    </div> */}
 
-                        <div>
-                            <br />
-                            <h6>ANNUAL
-                                COSTS
-                                (Projected)</h6>
-                            <CustomTable heading={ANcolumns} body={aNdata} />
-                            {/* <ReactTable
-                                data={ANdata}
-                                columns={ANcolumns}
-                                showPagination={false}
-                                defaultPageSize={-1}
-                            /> */}
-                        </div>
-                    </Col>
-                </Row>
-            </Container> : ''}
+                                <div>
+                                    <br />
+                                    <h6>ANNUAL
+                                        COSTS
+                                        (Projected)</h6>
+                                    <CustomTable heading={ANcolumns} body={aNdata} />
+                                    {/* <ReactTable
+        data={ANdata}
+        columns={ANcolumns}
+        showPagination={false}
+        defaultPageSize={-1}
+    /> */}
+                                </div>
+                            </Col>
+                        </Row>
+                    </Container></> : ''}
         </div>
     );
 };
