@@ -1,12 +1,13 @@
-import React, { useState } from "react";
-import DatePicker from "react-datepicker";
-import "../../css/customDatePickerWidth.css";
-import "react-datepicker/dist/react-datepicker.css";
-import ReactTable from "react-table-6";
-import "react-table-6/react-table.css";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { Button, Col, Container, Row } from "react-bootstrap";
 import Form from 'react-bootstrap/Form';
-import axios from "axios";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import "react-table-6/react-table.css";
+import "../../css/customDatePickerWidth.css";
+import ErrorSpinner from "../ErrorSpinner";
+import CustomTable from "./LeadTable/CustomTable";
 
 
 const HVSTab = () => {
@@ -72,23 +73,6 @@ const HVSTab = () => {
         { label: 'WYOMING', value: 'WY' }
     ];
 
-    const AHdata = [{
-        Hrate: 1,
-        Hservices: 'N/A'
-    }, {
-        Hrate: 2,
-        Hservices: 'N/A'
-    }, {
-        Hrate: 3,
-        Hservices: 'N/A'
-    }, {
-        Hrate: 4,
-        Hservices: 'N/A'
-    }, {
-        Hrate: 5,
-        Hservices: 'N/A'
-    }];
-
     const AHcolumns = [{
         Header: 'Inflation Rate percent',
         accessor: 'Hrate'
@@ -99,23 +83,6 @@ const HVSTab = () => {
         Header: 'Home Health Aide',
         accessor: 'HHHA'
 
-    }];
-
-    const ACdata = [{
-        Hrate: 1,
-        Hservices: 'N/A'
-    }, {
-        Hrate: 2,
-        Hservices: 'N/A'
-    }, {
-        Hrate: 3,
-        Hservices: 'N/A'
-    }, {
-        Hrate: 4,
-        Hservices: 'N/A'
-    }, {
-        Hrate: 5,
-        Hservices: 'N/A'
     }];
 
     const ACcolumns = [{
@@ -129,23 +96,6 @@ const HVSTab = () => {
         accessor: 'HHHA'
     }];
 
-    const ANdata = [{
-        Hrate: 1,
-        Hservices: 'N/A'
-    }, {
-        Hrate: 2,
-        Hservices: 'N/A'
-    }, {
-        Hrate: 3,
-        Hservices: 'N/A'
-    }, {
-        Hrate: 4,
-        Hservices: 'N/A'
-    }, {
-        Hrate: 5,
-        Hservices: 'N/A'
-    }];
-
     const ANcolumns = [{
         Header: 'Inflation Rate percent',
         accessor: 'Hrate'
@@ -156,17 +106,42 @@ const HVSTab = () => {
         Header: 'Private Room ',
         accessor: 'HHHA'
     }];
-
+    const datePickervalidate = new Date();
+    datePickervalidate.setFullYear(datePickervalidate.getFullYear() + 12);
     const [inputs, setInputs] = useState<any>({
-        age: '', state: 'AL', futureCost: new Date(), inflationRate: ''
+        age: '', state: '', region: '', futureCost: new Date(datePickervalidate), inflationRate: ''
     });
+    const [regions, setRegions] = useState([]);
     const [success, setSuccess] = useState(false);
+    const [update, setUpdate] = useState(false);
+    const [aHdata, setAHdata] = useState<any>([]);
+    const [aNdata, setANdata] = useState<any>([]);
+    const [aCdata, setACdata] = useState<any>([]);
+    const [showRegions, setShowRegions] = useState(false);
     const [validated, setValidated] = useState<boolean>(false);
     const onChangeForm = (event: React.ChangeEvent<any>) => {
         const name = event.target.name;
         const value = event.target.value;
         setInputs({ ...inputs, [name]: value });
     };
+
+    const onChangeState = (event: React.ChangeEvent<any>) => {
+        setInputs({ ...inputs, [event.target.name]: event.target.value });
+    }
+
+    useEffect(() => {
+        if (inputs.state !== '') {
+            setUpdate(true);
+            axios.post(`https://4wbrcdpngc.execute-api.us-east-1.amazonaws.com/default/costofcare`, { "state": inputs.state })
+                .then((res: any) => {
+                    setRegions(res?.data.regionExpenses.Rows);
+                    setShowRegions(true);
+                    setUpdate(false);
+                }).catch((error) => {
+                    console.log(error);
+                });
+        }
+    }, [inputs['state']]);
 
     const onFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -177,26 +152,39 @@ const HVSTab = () => {
             setValidated(true);
             return;
         }
+        setUpdate(true);
+        let regionData: any;
         const detailsData = {
             "age": inputs.age,
             "state": inputs.state,
-            "futureCost": inputs.futureCost,
+            "region": inputs.region,
+            "futureCost": inputs.futureCost.toISOString().split('-')[0],
             "inflationRate": inputs.inflationRate,
         };
+
         axios.post(`https://4wbrcdpngc.execute-api.us-east-1.amazonaws.com/default/costofcare`, detailsData)
             .then(res => {
+                setUpdate(false);
+                regionData = res.data.regionExpenses.Rows.filter((region: any) => {
+                    return region.MetroRegionCode == inputs.region
+                })
+                if (regionData.length > 0) {
+                    setAHdata([{ "Hrate": inputs.inflationRate, "Hservices": regionData[0].HHCHomemaker, "Haid": "N/A" }]);
+                    setACdata([{ "Hrate": inputs.inflationRate, "Hservices": regionData[0].HHCHealthCare, "Haid": "N/A" }]);
+                    setANdata([{ "Hrate": inputs.inflationRate, "semiPrivate": regionData[0].SNFSemi, "private": regionData[0].SNFPrivate }]);
+                }
                 setSuccess(true);
             }).catch((error) => {
                 console.log(error);
-            })
+            });
     }
 
     return (
         <div className="HVSTab">
-            <p>Calculate the Cost of Care in your area</p>
-            <Container>
+            {update ? <ErrorSpinner /> : ''}
+            <><p>Calculate the Cost of Care in your area</p><Container>
                 <Row>
-                    <Col lg={6}>
+                    <Col lg={4}>
                         <Form noValidate validated={validated} onSubmit={onFormSubmit}>
                             <Form.Group className="mb-3" controlId="formBasicEmail">
                                 <Form.Label className="mandatory">Age</Form.Label>
@@ -204,43 +192,58 @@ const HVSTab = () => {
                                 <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
                             </Form.Group>
                             <Form.Group className="mb-3" controlId="formBasicEmail">
-                                <Form.Label className="mandatory">State</Form.Label>
-                                <Form.Control as="select" value={inputs.state} required onChange={onChangeForm} name="state" aria-label="Default select example">
-                                    {countryData.map((e, key) => {
-                                        return <option key={key} value={e.value}>{e.label}</option>;
-                                    })}
-                                </Form.Control>
-                                <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
-                            </Form.Group>
-
-                            <Form.Group className="mb-3" controlId="formBasicEmail">
                                 <Form.Label className="mandatory">Future Cost</Form.Label>
                                 <DatePicker
                                     className="customDatePickerWidth"
                                     required
+                                    minDate={new Date(datePickervalidate)}
                                     selected={inputs.futureCost}
-                                    onChange={(date) => { date && setInputs({ ...inputs, 'futureCost': new Date(date) }) }}
+                                    onChange={(date) => { date && setInputs({ ...inputs, 'futureCost': new Date(date) }); }}
                                     showYearPicker
-                                    dateFormat="yyyy"
-                                />
+                                    dateFormat="yyyy" />
                                 <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
                             </Form.Group>
-                            <Form.Group className="mb-3" controlId="formBasicEmail">
-                                <Form.Label className="mandatory">Inflation Rate</Form.Label>
-                                <Form.Control required name='inflationRate' type="number" max={120} onChange={onChangeForm} value={inputs.inflationRate} placeholder="Enter Name" />
-                                <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
-                            </Form.Group>
-                            <Button variant="primary" type="submit">
+                            <Button variant="primary" type="submit" disabled={update}>
                                 Submit
                             </Button>
                         </Form>
                     </Col>
+                    <Col lg={4}>
+                        <Form.Group className="mb-3" controlId="formBasicEmail">
+                            <Form.Label className="mandatory">State</Form.Label>
+                            <Form.Control as="select" value={inputs.state} required onChange={onChangeState} name="state" aria-label="Default select example">
+                                <option value={''}>Select State</option>
+                                {countryData.map((e, key) => {
+                                    return <option key={key} value={e.value}>{e.label}</option>;
+                                })}
+                            </Form.Control>
+                            <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
+                        </Form.Group>
+                        <Form.Group className="mb-3" controlId="formBasicEmail">
+                            <Form.Label className="mandatory">Inflation Rate</Form.Label>
+                            <Form.Control required name='inflationRate' type="number" max={5} onChange={onChangeForm} value={inputs.inflationRate} placeholder="Enter Name" />
+                            <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
+                        </Form.Group>
+                    </Col>
+                    <Col lg={4}>
+                        {showRegions ?
+                            <Form.Group className="mb-3" controlId="formBasicEmail">
+                                <Form.Label className="mandatory">Regions</Form.Label>
+                                <Form.Control as="select" value={inputs.region} required onChange={onChangeState} name="region" aria-label="Default select example">
+                                    <option value={''}>Select Region</option>
+                                    {regions.map((e: any, key) => {
+                                        return <option key={key} value={e.MetroRegionCode}>{e.MetroRegion}</option>;
+                                    })}
+                                </Form.Control>
+                                <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
+                            </Form.Group> : ''}
+                    </Col>
                 </Row>
-
-            </Container>
-            {success ? <div className="container">
-                <div className="row">
-                    <div className="col-sm">
+            </Container></>
+            {success ? 
+            <Container className="container">
+                <Row className="row">
+                    <Col lg= { 4 } className="col-sm">
                         (A) IN-HOME CARE
 
                         {/* <div>
@@ -287,15 +290,16 @@ const HVSTab = () => {
                             <h6>ANNUAL
                                 COSTS
                                 (Projected)</h6>
-                            <ReactTable
+                            <CustomTable heading={AHcolumns} body={aHdata} />
+                            {/* <ReactTable
                                 data={AHdata}
                                 columns={AHcolumns}
                                 showPagination={false}
                                 defaultPageSize={-1}
-                            />
+                            /> */}
                         </div>
-                    </div>
-                    <div className="col-sm">
+                    </Col>
+                    <Col lg = { 4 } className="col-sm">
                         (B) COMMUNITY AND ASSISTED LIVING
 
                         {/* <div>
@@ -329,15 +333,16 @@ const HVSTab = () => {
                             <h6>ANNUAL
                                 COSTS
                                 (Projected)</h6>
-                            <ReactTable
+                            <CustomTable heading={ACcolumns} body={aCdata} />
+                            {/* <ReactTable
                                 data={ACdata}
                                 columns={ACcolumns}
                                 showPagination={false}
                                 defaultPageSize={-1}
-                            />
+                            /> */}
                         </div>
-                    </div>
-                    <div className="col-sm">
+                    </Col>
+                    <Col lg = { 4 } className="col-sm">
                         (C) NURSING HOME FACILITY
                         {/* <div>
                             <br />
@@ -370,16 +375,17 @@ const HVSTab = () => {
                             <h6>ANNUAL
                                 COSTS
                                 (Projected)</h6>
-                            <ReactTable
+                            <CustomTable heading={ANcolumns} body={aNdata} />
+                            {/* <ReactTable
                                 data={ANdata}
                                 columns={ANcolumns}
                                 showPagination={false}
                                 defaultPageSize={-1}
-                            />
+                            /> */}
                         </div>
-                    </div>
-                </div>
-            </div> : ''}
+                    </Col>
+                </Row>
+            </Container> : ''}
         </div>
     );
 };
