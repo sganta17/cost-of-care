@@ -243,7 +243,7 @@ const HVSTab = () => {
             {success ?
                 <>
                     <hr />
-                    <Container className="container">
+                    <Container className="container" style={{ background: "white"}}>
                         <Row className="row">
                             <Col lg={4} className="col-sm">
                                 (A) IN-HOME CARE
