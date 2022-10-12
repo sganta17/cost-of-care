@@ -183,7 +183,6 @@ const HVSTab = () => {
             }).catch((error) => {
                 setUpdate(false);
                 alert('something went wrong..!, please provide valid data.');
-                console.log(error);
             });
     }
 
@@ -229,7 +228,7 @@ const HVSTab = () => {
                             <Form.Group className="mb-3" controlId="formBasicInflation">
                                 <Form.Label className="mandatory">Inflation Rate</Form.Label>
                                 <InputGroup >
-                                    <Form.Control required name='inflationRate' type="number" max={5} onChange={onChangeForm} value={inputs.inflationRate} placeholder="Enter Name" />
+                                    <Form.Control required name='inflationRate' type="number" max={5} onChange={onChangeForm} value={inputs.inflationRate} placeholder="Enter Inflation Rate" />
                                     <InputGroup.Text id="basic-addon1">%</InputGroup.Text>
                                 </InputGroup>
                                 <Form.Control.Feedback type="invalid">Please provide valid Data not more than 5.</Form.Control.Feedback>
@@ -248,7 +247,6 @@ const HVSTab = () => {
                                     <Form.Control.Feedback type="invalid">Please Select region.</Form.Control.Feedback>
                                 </Form.Group> : ''}
                         </Col>
-
                     </Row>
                 </Form>
             </Container></>
