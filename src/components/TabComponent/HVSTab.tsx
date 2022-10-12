@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { Button, Col, Container, Row } from "react-bootstrap";
+import { Button, Col, Container, InputGroup, Row } from "react-bootstrap";
 import Form from 'react-bootstrap/Form';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -134,12 +134,19 @@ const HVSTab = () => {
             axios.post(`https://4wbrcdpngc.execute-api.us-east-1.amazonaws.com/default/costofcare`, { "state": inputs.state })
                 .then((res: any) => {
                     setRegions(res?.data.regionExpenses.Rows);
+                    setInputs({ ...inputs, 'region': '' });
                     setShowRegions(true);
                     setUpdate(false);
                 }).catch((error) => {
-                    console.log(error);
+                    setUpdate(false);
+                    setRegions([]);
+                    setInputs({ ...inputs, 'state': '' });
+                    alert('something went wrong..!, choose another state.');
                 });
+        } else {
+            setInputs({ ...inputs, 'region': '' });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [inputs['state']]);
 
     const onFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -174,6 +181,8 @@ const HVSTab = () => {
                 }
                 setSuccess(true);
             }).catch((error) => {
+                setUpdate(false);
+                alert('something went wrong..!, please provide valid data.');
                 console.log(error);
             });
     }
@@ -215,16 +224,19 @@ const HVSTab = () => {
                                         return <option key={key} value={e.value}>{e.label}</option>;
                                     })}
                                 </Form.Control>
-                                <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
+                                <Form.Control.Feedback type="invalid">Please Select State.</Form.Control.Feedback>
                             </Form.Group>
                             <Form.Group className="mb-3" controlId="formBasicInflation">
                                 <Form.Label className="mandatory">Inflation Rate</Form.Label>
-                                <Form.Control required name='inflationRate' type="number" max={5} onChange={onChangeForm} value={inputs.inflationRate} placeholder="Enter Name" />
-                                <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
+                                <InputGroup >
+                                    <Form.Control required name='inflationRate' type="number" max={5} onChange={onChangeForm} value={inputs.inflationRate} placeholder="Enter Name" />
+                                    <InputGroup.Text id="basic-addon1">%</InputGroup.Text>
+                                </InputGroup>
+                                <Form.Control.Feedback type="invalid">Please provide valid Data not more than 5.</Form.Control.Feedback>
                             </Form.Group>
                         </Col>
                         <Col lg={4}>
-                            {showRegions ?
+                            {showRegions && inputs.state !== '' ?
                                 <Form.Group className="mb-3" controlId="formBasicRegion">
                                     <Form.Label className="mandatory">Region</Form.Label>
                                     <Form.Control as="select" value={inputs.region} required onChange={onChangeState} name="region" aria-label="Default select example">
@@ -233,7 +245,7 @@ const HVSTab = () => {
                                             return <option key={key} value={e.MetroRegionCode}>{e.MetroRegion}</option>;
                                         })}
                                     </Form.Control>
-                                    <Form.Control.Feedback type="invalid">Please provide valid Data.</Form.Control.Feedback>
+                                    <Form.Control.Feedback type="invalid">Please Select region.</Form.Control.Feedback>
                                 </Form.Group> : ''}
                         </Col>
 
@@ -243,7 +255,7 @@ const HVSTab = () => {
             {success ?
                 <>
                     <hr />
-                    <Container className="container" style={{ background: "white"}}>
+                    <Container className="container" style={{ background: "white" }}>
                         <Row className="row">
                             <Col lg={4} className="col-sm">
                                 (A) IN-HOME CARE
